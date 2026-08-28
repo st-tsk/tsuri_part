@@ -1,0 +1,51 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui-voice
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    environment:
+      # STT: Open WebUI's built-in local Whisper.
+      - WHISPER_MODEL=base
+      - WHISPER_LANGUAGE=ja
+      - WHISPER_COMPUTE_TYPE=int8
+
+      # TTS: OpenAI-compatible local/free TTS server.
+      - AUDIO_TTS_ENGINE=openai
+      - AUDIO_TTS_OPENAI_API_BASE_URL=http://openai-edge-tts:5050/v1
+      - AUDIO_TTS_OPENAI_API_KEY=not-needed
+      - AUDIO_TTS_MODEL=tts-1
+      - AUDIO_TTS_VOICE=ja-JP-NanamiNeural
+
+      # Optional: connect to Ollama in this compose file.
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - open-webui-data:/app/backend/data
+    depends_on:
+      - openai-edge-tts
+      - ollama
+
+  openai-edge-tts:
+    image: travisvn/openai-edge-tts:latest
+    container_name: openai-edge-tts
+    restart: unless-stopped
+    environment:
+      - API_KEY=not-needed
+    ports:
+      - "5050:5050"
+
+  # Optional LLM provider. Open WebUI needs some chat backend if you want
+  # voice conversation, but STT/TTS themselves are configured above.
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+volumes:
+  open-webui-data:
+  ollama-data:

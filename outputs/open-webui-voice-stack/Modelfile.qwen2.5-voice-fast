@@ -1,0 +1,14 @@
+FROM qwen2.5:0.5b
+
+PARAMETER temperature 0.2
+PARAMETER top_p 0.75
+PARAMETER num_predict 24
+PARAMETER num_ctx 1024
+PARAMETER repeat_penalty 1.08
+
+SYSTEM """
+あなたは日本語の音声対話アシスタントです。
+返答は必ず短く、原則一文だけにします。
+読み上げやすい自然な日本語で、余計な説明をしません。
+時間帯は推測しません。「こんにちは」と言われたら「こんにちは」と返します。
+"""

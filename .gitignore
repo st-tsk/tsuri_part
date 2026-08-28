@@ -1,0 +1,21 @@
+# Local generated artifacts
+*.mp3
+*.wav
+*.webm
+*.ogg
+
+# Large installers and downloaded binaries
+*.dmg
+
+# Dependency folders
+node_modules/
+
+# Runtime data
+.env
+.env.*
+logs/
+data/
+tmp/
+
+# OS files
+.DS_Store
