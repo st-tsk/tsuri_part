@@ -45,6 +45,106 @@ openai-edge-ttsで音声化
 
 Docker Desktopは、コマンド実行前に起動しておいてください。
 
+## Gitに入っているものと入っていないもの
+
+このリポジトリには、Dockerそのものや、Dockerで動く巨大な実行環境は入っていません。
+
+GitHubに保存しているのは、以下のような「再現するための設計図」と「アプリのコード」です。
+
+| GitHubに入っているもの | 内容 |
+| --- | --- |
+| `docker-compose.yml` | どのDockerコンテナを起動するかを書いた設定 |
+| `Modelfile.*` | Ollamaで音声会話向けモデルを作るための設定 |
+| `server.mjs` | ブラウザ、Whisper、Ollama、TTSをつなぐNode.jsサーバー |
+| `index.html` / `app.js` / `styles.css` | ブラウザで使う簡易音声会話画面 |
+| `README.md` | 起動方法と仕組みの説明 |
+
+GitHubに入っていないものは、各自のPCで用意または取得します。
+
+| GitHubに入っていないもの | 理由 |
+| --- | --- |
+| Docker Desktop本体 | PCにインストールするアプリだから |
+| Dockerイメージ | 起動時にインターネットから取得する大きな実行環境だから |
+| Ollamaのモデルデータ | サイズが大きく、各PCのDocker volumeに保存されるから |
+| 生成された音声ファイル | 実行中に一時的に作られるデータだから |
+
+つまり、このGitHubリポジトリは「完成品の実行環境そのもの」ではなく、別のPCでも同じ環境を作るための説明書とコードです。
+
+## Dockerがこのアプリにどう関わるか
+
+Dockerは会話の流れを判断しているわけではありません。
+
+会話の流れを管理している中心は `outputs/simple-voice-chat/server.mjs` のNode.jsサーバーです。
+
+Dockerの役割は、音声会話に必要な重い部品を、それぞれコンテナとして起動しておくことです。
+
+```text
+Docker Desktop
+  ↓
+docker compose up -d
+  ↓
+docker-compose.yml を読む
+  ↓
+必要なDockerイメージを取得する
+  ↓
+Open WebUI / Ollama / openai-edge-tts のコンテナを起動する
+```
+
+今回Dockerで起動している部品は以下です。
+
+| コンテナ | このシステムでの役割 |
+| --- | --- |
+| `open-webui-voice` | Whisperが使える環境。音声を文字に変換するために利用 |
+| `ollama` | ローカルLLMを動かす環境。返答文を作る |
+| `openai-edge-tts` | テキストを音声に変換する環境。返答を読み上げる |
+
+Node.jsサーバーは、Docker内の部品を次のように呼び出します。
+
+```text
+文字起こしの場合:
+ブラウザ録音
+  ↓
+Node.jsサーバー
+  ↓
+docker cp で録音ファイルを open-webui-voice コンテナへ渡す
+  ↓
+docker exec でコンテナ内のWhisperを実行する
+  ↓
+文字起こし結果を受け取る
+```
+
+```text
+LLM返答の場合:
+Node.jsサーバー
+  ↓
+http://127.0.0.1:11434/api/chat
+  ↓
+Docker内のOllama
+  ↓
+返答テキストを受け取る
+```
+
+```text
+音声読み上げの場合:
+Node.jsサーバー
+  ↓
+http://127.0.0.1:5050/v1/audio/speech
+  ↓
+Docker内のopenai-edge-tts
+  ↓
+音声データを受け取る
+```
+
+Dockerは、ポートを通してMac側からコンテナにアクセスできるようにもしています。
+
+| ポート | Docker内で動いているもの |
+| --- | --- |
+| `3000` | Open WebUI |
+| `11434` | Ollama |
+| `5050` | openai-edge-tts |
+
+まとめると、Dockerは「部品を起動する土台」、Node.jsは「部品を順番につなぐ司令塔」です。
+
 ## セットアップ
 
 ### 1. リポジトリを取得する
