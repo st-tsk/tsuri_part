@@ -53,13 +53,25 @@ http://localhost:3000
 
 音声入力と音声出力だけならSTT/TTSの設定で足りますが、会話させるにはLLMが必要です。
 
-例:
+まず元になる軽量モデルを取得します。
 
 ```bash
-docker exec -it ollama ollama pull qwen3:4b
+docker compose exec ollama ollama pull qwen2.5:0.5b
 ```
 
-重い場合は、より小さいモデルを選んでください。
+次に、音声会話向けに短く返答するモデルを作成します。
+
+```bash
+docker compose exec -T ollama ollama create qwen2.5-voice-fast:0.5b -f - < Modelfile.qwen2.5-voice-fast
+```
+
+確認します。
+
+```bash
+docker compose exec ollama ollama list
+```
+
+一覧に `qwen2.5-voice-fast:0.5b` があればOKです。
 
 ## Open WebUI側の確認ポイント
 

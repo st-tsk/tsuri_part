@@ -119,14 +119,21 @@ openai-edge-tts
 先にOpen WebUI、Ollama、TTSのDocker構成を起動します。
 
 ```bash
-cd /Users/yumatsuri/Documents/Codex/2026-08-16/new-chat/outputs/open-webui-voice-stack
+cd outputs/open-webui-voice-stack
 docker compose up -d
+```
+
+初回は、音声会話向けモデルも作成します。
+
+```bash
+docker compose exec ollama ollama pull qwen2.5:0.5b
+docker compose exec -T ollama ollama create qwen2.5-voice-fast:0.5b -f - < Modelfile.qwen2.5-voice-fast
 ```
 
 次に、この簡易音声会話アプリを起動します。
 
 ```bash
-cd /Users/yumatsuri/Documents/Codex/2026-08-16/new-chat/outputs/simple-voice-chat
+cd ../simple-voice-chat
 node server.mjs
 ```
 
